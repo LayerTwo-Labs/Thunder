@@ -5,15 +5,12 @@
 #include <qt/trafficgraphwidget.h>
 #include <qt/clientmodel.h>
 
+#include <QPainterPath>
 #include <QPainter>
 #include <QColor>
 #include <QTimer>
 
 #include <cmath>
-
-#include <boost/bind/placeholders.hpp>
-
-using namespace boost::placeholders;
 
 #define DESIRED_SAMPLES         800
 
