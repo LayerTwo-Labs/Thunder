@@ -44,14 +44,11 @@ public:
     bool
     Get(const uint256& entry, const bool erase)
     {
-        boost::shared_lock<boost::shared_mutex> lock(cs_sigcache);
-        return setValid.contains(entry, erase);
+        return false;
     }
 
     void Set(uint256& entry)
     {
-        boost::unique_lock<boost::shared_mutex> lock(cs_sigcache);
-        setValid.insert(entry);
     }
     uint32_t setup_bytes(size_t n)
     {
@@ -82,13 +79,8 @@ void InitSignatureCache()
 
 bool CachingTransactionSignatureChecker::VerifySignature(const std::vector<unsigned char>& vchSig, const CPubKey& pubkey, const uint256& sighash) const
 {
-    uint256 entry;
-    signatureCache.ComputeEntry(entry, sighash, vchSig, pubkey);
-    if (signatureCache.Get(entry, !store))
-        return true;
     if (!TransactionSignatureChecker::VerifySignature(vchSig, pubkey, sighash))
         return false;
-    if (store)
-        signatureCache.Set(entry);
+
     return true;
 }

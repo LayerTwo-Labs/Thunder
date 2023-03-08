@@ -1390,9 +1390,6 @@ bool CheckInputs(const CTransaction& tx, CValidationState &state, const CCoinsVi
             static_assert(55 - sizeof(flags) - 32 >= 128/8, "Want at least 128 bits of nonce for script execution cache");
             CSHA256().Write(scriptExecutionCacheNonce.begin(), 55 - sizeof(flags) - 32).Write(tx.GetWitnessHash().begin(), 32).Write((unsigned char*)&flags, sizeof(flags)).Finalize(hashCacheEntry.begin());
             AssertLockHeld(cs_main); //TODO: Remove this requirement by making CuckooCache not require external locks
-            if (scriptExecutionCache.contains(hashCacheEntry, !cacheFullScriptStore)) {
-                return true;
-            }
 
             for (unsigned int i = 0; i < tx.vin.size(); i++) {
                 const COutPoint &prevout = tx.vin[i].prevout;
@@ -1406,7 +1403,7 @@ bool CheckInputs(const CTransaction& tx, CValidationState &state, const CCoinsVi
                 // spent being checked as a part of CScriptCheck.
 
                 // Verify signature
-                CScriptCheck check(coin.out, tx, i, flags, cacheSigStore, &txdata);
+                CScriptCheck check(coin.out, tx, i, flags, false, &txdata);
                 if (pvChecks) {
                     pvChecks->push_back(CScriptCheck());
                     check.swap(pvChecks->back());
@@ -1432,12 +1429,6 @@ bool CheckInputs(const CTransaction& tx, CValidationState &state, const CCoinsVi
                     // super-majority signaling has occurred.
                     return state.DoS(100,false, REJECT_INVALID, strprintf("mandatory-script-verify-flag-failed (%s)", ScriptErrorString(check.GetScriptError())));
                 }
-            }
-
-            if (cacheFullScriptStore && !pvChecks) {
-                // We executed all of the provided scripts, and were told to
-                // cache the result. Do so now.
-                scriptExecutionCache.insert(hashCacheEntry);
             }
         }
     }
